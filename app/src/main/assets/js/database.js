@@ -158,7 +158,7 @@ async function genericDatabaseOperation(){
 
 async function genericExecuteOperation(event) {
 	let db = event.target.result; 
-	console.log("opening database version: "+ db.version);
+	console.log("opening database version: "+ db.version+" and store:"+this.target.store);
 	let tx = db.transaction( this.target.store, this.mode);
 	let store = tx.objectStore(this.target.store);
 
