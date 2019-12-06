@@ -13,6 +13,7 @@ try{
     this.nativeService = [] ;
     nativeService["external"] = false ;
     nativeService["getBackup"] = getBackup ;
+    nativeService["speak"] = speak ;
 }
 
 
@@ -233,7 +234,6 @@ async function move(movement){
   }else{
     changeClass("A3","question")
   }
-
   return true;
 };
 
@@ -241,9 +241,10 @@ async function displayFlashCard(data , config , current){
   let currentRow =  data[current].order
   let showStatus = data[currentRow].status; 
   let showing = data[currentRow][config.showing]
-
+  let speakThis = showing ;
   if("answer" === config.showing ){
     showing = "<b>"+data[currentRow][config.hidding]+"</b><br>"+showing ;
+    speakThis = data[currentRow][config.hidding] ;
   }
 
   displayOn(config.display, showing); 
@@ -259,6 +260,8 @@ async function displayFlashCard(data , config , current){
 
   let style = config.showing ;
   changeClass(config.display,style)
+
+  speak(speakThis)
   
   service("flashcard").saveOrUpdateList([data[currentRow]]); 
   return true ;
@@ -406,4 +409,34 @@ function addDiv (target , temporal, message) {
 function removeDiv (temporal) {
   var element = document.getElementById(temporal);
   element.parentNode.removeChild(element);
+}
+
+
+
+function speak(speakThis){
+   if(nativeService.external){
+        let data =   application.voice ;
+        data.text =  speakThis ;
+        nativeService.speak(JSON.stringify(data)) ;
+   }else{
+        speechSynthesis.speak(createSpeech(removeTags(speakThis)));
+   }
+}
+
+function createSpeech(text){
+    const msg = new SpeechSynthesisUtterance();
+    msg.volume = application.voice.volume; // 0 to 1
+    msg.rate = application.voice.rate; // 0.1 to 10
+    msg.pitch = application.voice.pitch ; // 0 to 2
+    msg.text  =  text;
+    msg.voiceURI = application.voice.name;
+    msg.lang = application.voice.lang   ;
+    return msg ;
+}
+
+function removeTags(htmlText){
+    var div = document.createElement("div");
+    div.innerHTML = htmlText;
+    var text = div.textContent || div.innerText || "";
+    return text ;
 }

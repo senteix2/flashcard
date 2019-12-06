@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
+import android.speech.tts.TextToSpeech;
 import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.ConsoleMessage;
@@ -13,9 +14,14 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senteix2.flashcard.util.GoogleDocumentImporter;
 import com.senteix2.flashcard.util.Log;
 import com.senteix2.flashcard.util.PropertyReader;
+
+import java.util.Date;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -49,6 +55,8 @@ public class FullscreenActivity extends AppCompatActivity {
     private Properties properties;
     private PropertyReader propertyReader;
     private GoogleDocumentImporter importer;
+    private TextToSpeech textToSpeech;
+    private ObjectMapper jsonMapper  = new ObjectMapper();
 
     private final Runnable mHidePart2Runnable = new Runnable() {
         @SuppressLint("InlinedApi")
@@ -130,6 +138,19 @@ public class FullscreenActivity extends AppCompatActivity {
         webview.setScrollbarFadingEnabled(false);
         webview.addJavascriptInterface(this ,"nativeService" );
         importer = new GoogleDocumentImporter() ;
+
+        textToSpeech=new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if(status != TextToSpeech.ERROR) {
+                    textToSpeech.setLanguage(Locale.US);
+                }
+            }
+        });
+
+
+
+
         updateUI();
     }
     @JavascriptInterface
@@ -138,11 +159,19 @@ public class FullscreenActivity extends AppCompatActivity {
         String result = "" ;
         try{
             result =   importer.importAndToJsonString(url, false) ;
-            Log.d(TAG,"resul:"+result.length());
+            Log.d(TAG,"result:"+result.length());
         }catch (Exception e){
             Log.e(TAG,e.getMessage()) ;
         }
         return result ;
+    }
+
+    @JavascriptInterface
+    public Boolean speak(String jsonData) throws  Exception{
+        Map<String,String> data =  jsonMapper.readValue( jsonData  , Map.class) ;
+        String uteranceId = data.get("text").hashCode()+"-"+ (new Date()).getTime();
+        int result = textToSpeech.speak(data.get("text") ,  TextToSpeech.QUEUE_FLUSH,  null , uteranceId );
+        return result>0 ;
     }
 
     @Override
@@ -196,7 +225,7 @@ public class FullscreenActivity extends AppCompatActivity {
 
 
     /**
-     * Schedules a call to hide() in delay milliseconds, canceling any
+     * Schedules a call to hide() qn delay milliseconds, canceling any
      * previously scheduled calls.
      */
     private void delayedHide(int delayMillis) {
@@ -221,6 +250,8 @@ public class FullscreenActivity extends AppCompatActivity {
             }
         });
     }
+
+
 
 
 }
