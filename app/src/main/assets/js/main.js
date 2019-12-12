@@ -332,7 +332,7 @@ function verifyRestriction(value , restriction, direction , stats ){
 
 }
 
-function analyzeStatus(data){}
+function analyzeStatus(data){
      let result = data.reduce( ( obj  ,element) => {
             let current = parseStatus(element.status);
               // alert("status:"+element.status+" current:"+ current);
