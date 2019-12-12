@@ -16,6 +16,7 @@ import android.webkit.WebView;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senteix2.flashcard.util.GoogleDocumentImporter;
+import com.senteix2.flashcard.util.HtmlImporter;
 import com.senteix2.flashcard.util.Log;
 import com.senteix2.flashcard.util.PropertyReader;
 
@@ -57,6 +58,7 @@ public class FullscreenActivity extends AppCompatActivity {
     private GoogleDocumentImporter importer;
     private TextToSpeech textToSpeech;
     private ObjectMapper jsonMapper  = new ObjectMapper();
+    private HtmlImporter htmlImporter = new HtmlImporter();
 
     private final Runnable mHidePart2Runnable = new Runnable() {
         @SuppressLint("InlinedApi")
@@ -172,6 +174,13 @@ public class FullscreenActivity extends AppCompatActivity {
         String uteranceId = data.get("text").hashCode()+"-"+ (new Date()).getTime();
         int result = textToSpeech.speak(data.get("text") ,  TextToSpeech.QUEUE_FLUSH,  null , uteranceId );
         return result>0 ;
+    }
+
+    @JavascriptInterface
+    public String getHtml(String url) throws  Exception{
+        String result ="" ;
+        result = HtmlImporter.getPage(url) ;
+        return result;
     }
 
     @Override

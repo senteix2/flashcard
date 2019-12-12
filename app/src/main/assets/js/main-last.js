@@ -46,48 +46,44 @@ const cleanButton = document.querySelector('#clean');
 cleanButton.addEventListener('click', cleanDatabase); */
 
 const inOrderButton = document.querySelector('#inorder');
-inOrderButton.addEventListener('click', inOrder); 
+inOrderButton.addEventListener('click', inOrder);
 const shuffleButton = document.querySelector('#shuffle');
-shuffleButton.addEventListener('click', shuffle); 
+shuffleButton.addEventListener('click', shuffle);
 const configButton = document.querySelector('#config');
 configButton.addEventListener('click', showhide);
 
 
 const nextButton = document.querySelector('#next');
-nextButton.addEventListener('click', next); 
+nextButton.addEventListener('click', next);
 const previousButton = document.querySelector('#previous');
-previousButton.addEventListener('click', previous); 
+previousButton.addEventListener('click', previous);
 const flipcardButton = document.querySelector('#A3');
-flipcardButton.addEventListener('click', flipcard); 
+flipcardButton.addEventListener('click', flipcard);
 const easyButton = document.querySelector('#easy');
-easyButton.addEventListener('click', easy); 
+easyButton.addEventListener('click', easy);
 const hardButton = document.querySelector('#hard');
 hardButton.addEventListener('click', hard);
 
 const B2display = document.querySelector('#B2');
 B2display.addEventListener("keypress", goto);
 
-const restrictSelect= document.querySelector('#restrictFrom');
-restrictSelect.addEventListener("change", changeRestrict);
-const restrictDirection= document.querySelector('#restrictDirection');
-restrictDirection.addEventListener("click", changeRestrictDirection);
 
 
 async function getConfigFromDatabase(){
-	let data = await service("config").getAllFromStore(); 
+	let data = await service("config").getAllFromStore();
 	dataCallback(data);
 }
 
 async function getDataFromDatabase(){
 	let data = await service("flashcard").getAllFromStore();
-	dataCallback(data);  
+	dataCallback(data);
 }
 
 function dataCallback(data){
          console.log(data.length) ;
 }
-
 async function restoreBackup(){
+
    // addDiv("responsiveTable", "loader" , "Loading")
     await changeOpacity("loader");
     await doBackup();
@@ -98,29 +94,32 @@ async function restoreBackup(){
 
  async function doBackup(){
 
+
     console.log("changing opacity of :"+loader);
+
+
     let dataBackup = proccessBackup();
 	let sheetconfig =  dataBackup.config.name
 		.reduce((o, k, i) => ({...o, [k]: dataBackup.config.value[i]} ), {});
 	// let newconfig =  dataBackup.config.name.reduce((o, k, i) => ([...o, {name:k ,value: dataBackup.config.value[i]}] ), []);
 
 	console.log("sheetconfig to save: "+JSON.stringify(sheetconfig));
-	
+
 	let originalData  = dataBackup[sheetconfig.sheet] ;
-	let data  =  originalData[Object.keys(originalData)[0]] 
-			.reduce((acc, value, index, array) => { 
+	let data  =  originalData[Object.keys(originalData)[0]]
+			.reduce((acc, value, index, array) => {
 				let partial = Object.keys(originalData)
-						    .reduce((columns, column, i) => 
-							({...columns, [column]: originalData[column][index] } ), {});			
+						    .reduce((columns, column, i) =>
+							({...columns, [column]: originalData[column][index] } ), {});
 				acc.push(partial)
 			  	return acc;
 				}, [] );
 
 	sheetconfig.sheeturl = getStringFrom("sheet");
 	sheetconfig.current = 0 ;
-	
-	service("flashcard").saveOrUpdateList(data); 
-	service("config").saveOrUpdateList([sheetconfig]); 
+
+	service("flashcard").saveOrUpdateList(data);
+	service("config").saveOrUpdateList([sheetconfig]);
 	showStore();
 	await inOrder() ;
 
@@ -128,14 +127,14 @@ async function restoreBackup(){
 }
 
 function cleanDatabase(){
-	service("flashcard").cleanStore(); 
-	service("config").cleanStore(); 
+	service("flashcard").cleanStore();
+	service("config").cleanStore();
 	showStore();
 }
 
 function displayOn(id, value){
 	var element = document.querySelector("#"+id);
-	element.innerHTML = value ; 
+	element.innerHTML = value ;
 }
 
 function getValueFrom(id){
@@ -150,7 +149,7 @@ function getStringFrom(id){
 
 function changeClass(id, value){
 	var element = document.querySelector("#"+id);
-	element.className = value ; 
+	element.className = value ;
 }
 function getClassFrom(id){
 	var element = document.querySelector("#"+id);
@@ -158,7 +157,7 @@ function getClassFrom(id){
 }
 
 
-async function showStore(){  
+async function showStore(){
  	var size = await service("flashcard").getStoreSize();
 	displayOn("totalCards",size)
 	let configs  = await service("config").getAllFromStore();
@@ -172,21 +171,6 @@ async function showStore(){
         console.log("IT DIDNT WORKED config.sheeturl: "+config)
     }
     displayOn("sheet",sheeturl);
-
-    if(!(typeof config.curentRestrict === 'undefined' || config.curentRestrict === '')){
-        restrictSelect.value = config.curentRestrict ;
-    }else{
-        let ev = {target: restrictSelect } ;
-        changeRestrict(ev);
-    }
-
-    if(!(typeof config.curentDirection === 'undefined' || config.curentDirection === '')){
-        restrictDirection.value = config.curentDirection ;
-    }else{
-        let ev = {target: restrictDirection } ;
-        changeRestrictDirection(ev);
-    }
-
 }
 
 const statusList = [ "hard", "normal","new" ,"easy" , "learned" ] ;
@@ -195,9 +179,9 @@ function getStatusDescription(value){
 };
 
 async function inOrder() {
-  var data =  await service("flashcard").getAllFromStore(); 
+  var data =  await service("flashcard").getAllFromStore();
 
-  for(var i = 0;i<data.length; i++) {    
+  for(var i = 0;i<data.length; i++) {
     data[i].order = i;
   }
 
@@ -207,19 +191,19 @@ async function inOrder() {
 };
 
 async function shuffle() {
-  var data = await service("flashcard").getAllFromStore(); 
+  var data = await service("flashcard").getAllFromStore();
   var total = data.length ;
- 
+
   var done = [] ;
-  for(var i = 0;i< total; i++) {    
-    done[i]= i; 
+  for(var i = 0;i< total; i++) {
+    done[i]= i;
   }
-  
-  for(var i = 0;i< total;i++) {  
+
+  for(var i = 0;i< total;i++) {
     var random =Math.floor( Math.random() * (done.length))  ;
-    data[i].order=done[random] ; 
-    done.splice(random,1) ;  
-   } 
+    data[i].order=done[random] ;
+    done.splice(random,1) ;
+   }
    service("flashcard").saveOrUpdateList(data);
    move(0);
   return true;
@@ -227,20 +211,16 @@ async function shuffle() {
 
 
 async function move(movement){
-  let configs  = await service("config").getAllFromStore();   
+  let configs  = await service("config").getAllFromStore();
   let config = configs[0];
   var data =  await service("flashcard").getAllFromStore();
 
   if(config){
       var current =  config.current;
-      var movementScale =  1 ;
       var total = data.length ;
-      let stats = analyzeStatus(data) ;
-
       if (!(!isNaN(parseFloat(current)) && isFinite(current))){
         current = 0;
       }
-
       current= current+ movement;
 
       if(current>=total){
@@ -252,6 +232,8 @@ async function move(movement){
       }
 
       let currentRow = data[current].order ;
+      let stats = analyzeStatus(data, current) ;
+
       await displayFlashCard(data,config , current , stats);
 
       config.current = current;
@@ -262,61 +244,7 @@ async function move(movement){
   return true;
 };
 
-function applyLimits(current , total){
-      if(current>=total){
-         current = current - total;
-      }
-
-      if(current<0){
-        current = total - 1;
-      }
-      return current ;
-}
-
-function verifyRestrictionMovement(restriction, direction , stats ){
-         let real = 0 ;
-         if(direction==="="){
-            real = real + stats[restriction];
-         }
-         if(direction===">="){
-            Object.keys(stats).forEach( (item, index) => {
-                                    if(item>=restriction){
-                                        real = real +  stats[item]    ;
-                                    }
-                            });
-
-         }
-         if(direction==="<="){
-                     console.log(stats)
-                     Object.keys(stats).forEach( (item, index) => {
-                                             if(item<=restriction){
-                                                 real = real + stats[item]  ;
-                                             }
-                                     });
-
-          }
-
-          return real ;
-
-}
-
-function verifyRestriction(value , restriction, direction , stats ){
-         let real = false ;
-         if(direction==="="){
-            real = value  ===  restriction;
-         }
-         if(direction===">="){
-             real = value >= restriction ;
-         }
-         if(direction==="<="){
-             real = value <= restriction ;
-          }
-
-          return real ;
-
-}
-
-function analyzeStatus(data){
+function analyzeStatus(data, current){
      let result = data.reduce( ( obj  ,element) => {
             let current = parseStatus(element.status);
               // alert("status:"+element.status+" current:"+ current);
@@ -334,7 +262,7 @@ function analyzeStatus(data){
 async function displayFlashCard(data , config , current, stats){
   let total = data.length ;
   let currentRow =  data[current].order
-  let showStatus = data[currentRow].status; 
+  let showStatus = data[currentRow].status;
   let showing = data[currentRow][config.showing]
   let speakThis = showing ;
   if("answer" === config.showing ){
@@ -354,7 +282,7 @@ async function displayFlashCard(data , config , current, stats){
                               });
 
         data[currentRow].examples = examplesText ;
-        service("flashcard").saveOrUpdateList([data[currentRow]]);
+        //service("flashcard").saveOrUpdateList([data[currentRow]]);
     }else{
         console.log("examples is defined '"+card.examples+"'  "+( typeof card.examples === 'undefined')+" "+ (card.examples === ''));
         examplesText = card.examples ;
@@ -365,23 +293,25 @@ async function displayFlashCard(data , config , current, stats){
 
   }
 
-  displayOn(config.display, showing); 
-  displayOn(config.local, current + 1); 
-  displayOn(config.global, currentRow + 1); 
-  
+  displayOn(config.display, showing);
+  displayOn(config.local, current + 1);
+  displayOn(config.global, currentRow + 1);
+
 
   showStatus = parseStatus(showStatus)
 
 
-  displayOn(config.showStatus, getStatusDescription(showStatus)); 
+  displayOn(config.showStatus, getStatusDescription(showStatus));
   data[currentRow].status = showStatus ;
 
   let style = config.showing ;
   changeClass(config.display,style)
 
   speak(speakThis)
-  
+
   service("flashcard").saveOrUpdateList([data[currentRow]]);
+
+
 
    statusList.forEach( (item, index) => {
               		 //document.getElementById("status"+index).innerHTML += index + ":" + result[index] ;
@@ -390,7 +320,7 @@ async function displayFlashCard(data , config , current, stats){
 
 
 
-  return true ;
+  return result ;
 }
 
 function parseStatus(status){
@@ -408,47 +338,40 @@ async function changeStatus (increament ){
   let config = configs[0];
   var current =  config.current;
   var data =  await service("flashcard").getAllFromStore();
-  let total = data.length ;
-  
+
   if (!(!isNaN(parseFloat(current)) && isFinite(current))){
     current = 0;
   }
-    
+
   var currentRow = data[current].order ;
   var showStatus = data[currentRow].status ;
-  showStatus = showStatus + increament; 
+  showStatus = showStatus + increament;
   if(showStatus<0){
     showStatus = 0;
   }
   if(showStatus>4){
     showStatus = 4;
   }
-  data[currentRow].status = showStatus ; 
+  data[currentRow].status = showStatus ;
   service("flashcard").saveOrUpdateList([data[currentRow]]);
   displayOn(config.showStatus, getStatusDescription(showStatus));
-
-  let stats = analyzeStatus(data) ;
-
-  statusList.forEach( (item, index) => {
-                		 //document.getElementById("status"+index).innerHTML += index + ":" + result[index] ;
-                		 displayOn("status"+index, stats[index]+" ("+( (stats[index]/total)*100 ).toFixed(0)+"%)" );
-                });
+ // move(0);
   return true ;
 }
 
-function hard (){ 
+function hard (){
   changeStatus(-1);
 }
-function easy (){ 
+function easy (){
   changeStatus(+1);
 }
 
 
 async function next (){
-  let configs  = await service("config").getAllFromStore();  
+  let configs  = await service("config").getAllFromStore();
   let config = configs[0] ;
   config.showing = "question" ;
-  service("config").saveOrUpdateList([config]); 
+  service("config").saveOrUpdateList([config]);
   move(1);
 }
 
@@ -467,15 +390,15 @@ async function goto (event){
 
 
 async function previous (){
-  let configs  = await service("config").getAllFromStore();  
-  let config = configs[0] ; 
+  let configs  = await service("config").getAllFromStore();
+  let config = configs[0] ;
   config.showing = "question" ;
-  service("config").saveOrUpdateList([config]); 
+  service("config").saveOrUpdateList([config]);
   move(-1);
 }
 
 async function flipcard(){
-  let configs  = await service("config").getAllFromStore();  
+  let configs  = await service("config").getAllFromStore();
   let config = configs[0] ;
   if("question" === config.showing ){
     config.showing = "answer" ;
@@ -484,17 +407,17 @@ async function flipcard(){
     config.showing = "question" ;
     config.hidding = "answer" ;
   }
-  service("config").saveOrUpdateList([config]); 
-  move(0);  
+  service("config").saveOrUpdateList([config]);
+  move(0);
 }
 
 function service(targetName){
 	let serviceobj = {getStoreSize: getTarget(targetName,getStoreSize),
 			   cleanStore: getTarget(targetName,cleanStore) ,
 			   saveOrUpdateList : getTarget(targetName, saveOrUpdateList) ,
-			   getAllFromStore : getTarget(targetName, getAllFromStore)  } ; 
+			   getAllFromStore : getTarget(targetName, getAllFromStore)  } ;
 	return serviceobj ;
-       
+
 }
 
 function getTarget(targetName,method){
@@ -600,7 +523,7 @@ function getUsageExamples(word){
         let url = example.url + word.toLowerCase();+ "&maxResults=" + example.maxResults + "&startOffset="+example.startOffset;
         let jsonData  = getHtml(url);
         console.log("jsonData:"+jsonData)
-        let  result = jsonData===""? "" :JSON.parse(jsonData) ;
+        let  result = JSON.parse(jsonData) ;
 
         let exampleData = [] ;
         if(!(result === "")){
@@ -615,28 +538,4 @@ function getUsageExamples(word){
 
         }
         return exampleData ;
-}
-
-async function changeRestrict(event){
-    let configs  = await service("config").getAllFromStore();
-    let config = configs[0];
-    config.curentRestrict = event.target.value ;
-    service("config").saveOrUpdateList([config]);
-}
-
-async function changeRestrictDirection(event){
-    let configs  = await service("config").getAllFromStore();
-    let config = configs[0];
-    let currentDirection =  event.target.value ;
-    if(currentDirection === ">="){
-        currentDirection = "<=" ;
-    }else if(currentDirection === "<="){
-        currentDirection = "=" ;
-    }else{
-        currentDirection = ">=" ;
-    }
-
-    event.target.value = currentDirection  ;
-    config.curentDirection =currentDirection ;
-    service("config").saveOrUpdateList([config]);
 }

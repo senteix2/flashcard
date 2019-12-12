@@ -8,18 +8,15 @@
 <body id="body">
 <div id="responsiveTable"  >
     <!---->
-        <div class="display"> S / T / G / L  <br>
-            <em id="A2" > status </em> /
-            <em id="totalCards"  > totalCards </em> /
-            <em id="C2" > global </em> /
-            <em id="B2" contentEditable="true" > local  </em>
-        </div>
+        <div class="display"> S:<em id="A2" > status </em>  / T:<em id="totalCards"  > totalCards </em> / G:<em id="C2" > global </em>  / L: <em id="B2" contentEditable="true" > local  </em>  <br>
+			hard: <em id="status0" >##</em> normal: <em id="status1" >##</em> new:<em id="status2" >##</em> <br> easy:<em id="status3" >##</em> learned:<em id="status4" >##</em>
+		</div>
 
 	<div  id="A3" > Showing </div>
 
 	<div class="sheet" id="sheet" contentEditable="true"></div>
 	<div class="restore" id="restore"  > RESTORE </div>
-	<div class="clean" id="clean" >    CLEAN  </div>
+	<!-- <div class="clean" id="clean" >    CLEAN  </div> -->
 	<div class="inorder" id="inorder" > IN ORDER </div>
 	<div class="shuffle" id="shuffle" > SHUFFLE </div>
 	<div class="config" id="config" > CONFIG </div>
@@ -29,6 +26,15 @@
 	<div class="hard" id="hard" > HARD </div>
 	<div class="easy" id="easy" > EASY </div> <!-- -->
     <div class="loader" id="loader" ></div>
+	<div class="restrict" id="restrict" >
+		<select name="restrict" id="restrictFrom">
+			<option value="0">HARD </option>
+			<option value="1">NORMAL </option>
+			<option value="2">NEW </option>
+			<option value="3">EASY </option>
+			<option value="4" selected>LEARNED </option>
+		</select> <input type="button" id="restrictDirection" value=">=">
+	</div>
 </div>
 
 
