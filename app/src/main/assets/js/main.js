@@ -230,6 +230,7 @@ async function move(movement){
   let configs  = await service("config").getAllFromStore();   
   let config = configs[0];
   var data =  await service("flashcard").getAllFromStore();
+  let currentTarget = 0 ;
 
   if(config){
       var current =  config.current;
@@ -241,20 +242,35 @@ async function move(movement){
         current = 0;
       }
 
-      current= current+ movement;
 
-      if(current>=total){
-         current = 0;
-      }
+      do{
+            currentTarget = current+ (movement*movementScale) ;
+            currentTarget = applyLimits(currentTarget,  total) ;
+            let currentRow = data[currentTarget].order ;
 
-      if(current<0){
-        current = total - 1;
-      }
+            if(Math.abs(movement)>0){
 
-      let currentRow = data[current].order ;
-      await displayFlashCard(data,config , current , stats);
+               let real = verifyRestrictionMovement(config.curentRestrict, config.curentDirection,stats);
 
-      config.current = current;
+               if(real<2){
+                  alert("No more cards with the restricted status selected");
+                  return false ;
+               }else{
+
+                    let showStatus = data[currentRow].status;
+                    showStatus = parseStatus(showStatus);
+                    pass =!verifyRestriction( showStatus, config.curentRestrict, config.curentDirection,stats)
+                    movementScale ++ ;
+               }
+            }else{ pass = false ;  }
+
+      }while(pass)
+
+
+
+      await displayFlashCard(data,config , currentTarget , stats);
+
+      config.current = currentTarget;
       service("config").saveOrUpdateList([config]);
   }else{
     changeClass("A3","question")
@@ -280,7 +296,7 @@ function verifyRestrictionMovement(restriction, direction , stats ){
          }
          if(direction===">="){
             Object.keys(stats).forEach( (item, index) => {
-                                    if(item>=restriction){
+                                    if(restriction >= item){
                                         real = real +  stats[item]    ;
                                     }
                             });
@@ -289,7 +305,7 @@ function verifyRestrictionMovement(restriction, direction , stats ){
          if(direction==="<="){
                      console.log(stats)
                      Object.keys(stats).forEach( (item, index) => {
-                                             if(item<=restriction){
+                                             if(restriction <= item){
                                                  real = real + stats[item]  ;
                                              }
                                      });
@@ -303,20 +319,20 @@ function verifyRestrictionMovement(restriction, direction , stats ){
 function verifyRestriction(value , restriction, direction , stats ){
          let real = false ;
          if(direction==="="){
-            real = value  ===  restriction;
+            real = value  ==  restriction;
          }
          if(direction===">="){
-             real = value >= restriction ;
+             real = restriction  >=  value;
          }
          if(direction==="<="){
-             real = value <= restriction ;
+             real = restriction <= value ;
           }
 
           return real ;
 
 }
 
-function analyzeStatus(data){
+function analyzeStatus(data){}
      let result = data.reduce( ( obj  ,element) => {
             let current = parseStatus(element.status);
               // alert("status:"+element.status+" current:"+ current);
