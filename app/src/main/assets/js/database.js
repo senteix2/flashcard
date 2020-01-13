@@ -33,6 +33,27 @@ async function getStoreSize(){
 	return result ;
 }
 
+async function existsByKey(key){
+	this.action = "trying to open database for "+this.database+" to count by key "+this.target.store;
+	this.mode = IDBTransaction.READ_ONLY;
+	this.dataoperation = async (db, store) =>  {
+	return await new Promise( (resolve,reject) => {
+	    let index = store.index(this.target.index.column);
+		var total  = index.count(key);
+		total.addEventListener("success" , () => resolve(total.result) )
+		total.addEventListener("error" , () => { reject("could not perform store.count: "+this.action) ;} ) ;
+
+	});
+	};
+	this.errorfunction =  genericErrorDatabase.bind(this);
+	this.upgradefunction = genericUpgradeCreation.bind(this);
+	this.genericoperation =  genericDatabaseOperation.bind(this);
+	this.successfunction = genericExecuteOperation.bind(this);
+
+	let result = await this.genericoperation() ;
+	return result ;
+}
+
 
 
 async function getAllFromStore(){

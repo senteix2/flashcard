@@ -231,6 +231,7 @@ async function move(movement){
   let config = configs[0];
   var data =  await service("flashcard").getAllFromStore();
   let currentTarget = 0 ;
+  let pass = false ;
 
   if(config){
       var current =  config.current;
@@ -284,7 +285,7 @@ function applyLimits(current , total){
       }
 
       if(current<0){
-        current = total - 1;
+        current = total + current;
       }
       return current ;
 }
@@ -508,7 +509,9 @@ function service(targetName){
 	let serviceobj = {getStoreSize: getTarget(targetName,getStoreSize),
 			   cleanStore: getTarget(targetName,cleanStore) ,
 			   saveOrUpdateList : getTarget(targetName, saveOrUpdateList) ,
-			   getAllFromStore : getTarget(targetName, getAllFromStore)  } ; 
+			   getAllFromStore : getTarget(targetName, getAllFromStore ) ,
+			   existsByKey :  getTarget(targetName, existsByKey )
+			    } ;
 	return serviceobj ;
        
 }
@@ -615,7 +618,7 @@ function getUsageExamples(word){
         let example = application.example ;
         let url = example.url + word.toLowerCase();+ "&maxResults=" + example.maxResults + "&startOffset="+example.startOffset;
         let jsonData  = getHtml(url);
-        console.log("jsonData:"+jsonData)
+        console.log("jsonData:"+jsonData);
         let  result = jsonData===""? "" :JSON.parse(jsonData) ;
 
         let exampleData = [] ;
@@ -656,3 +659,127 @@ async function changeRestrictDirection(event){
     config.curentDirection =currentDirection ;
     service("config").saveOrUpdateList([config]);
 }
+
+async function searchOrAddFlashCard(word){
+    // let search if we already have this word on our cards
+    console.log("looking for word: "+word+" on database ");
+    let wordexists = await service("flashcard").existsByKey(word);
+
+    if(!wordexists){
+        word = word.replace(/^\w/, c => c.toUpperCase());
+        wordexists = await service("flashcard").existsByKey(word);
+    }
+
+
+    if(wordexists){
+        await moveToWord(word) ;
+    }else{
+        //alert("creating new flashcard "+word+" wordexists: "+wordexists);
+        createNewFlashcard(word);
+    }
+
+}
+
+ async function moveToWord(word){
+    let data =  await service("flashcard").getAllFromStore();
+    let column = application["flashcard"].index.column ;
+    let configs  = await service("config").getAllFromStore();
+    let config = configs[0];
+
+    let found = {} ;
+    let index = 0 ;
+    let newCurrent = 0 ;
+    for(var i = 0 ; i<data.length; i++){
+        if(word === data[i][column] ){
+            found = data[i] ;
+            index = i ;
+            break ;
+        }
+    }
+
+    for(var i = 0 ; i<data.length; i++){
+            if(index  === data[i].order  ) {
+                newCurrent = i ;
+                break ;
+            }
+        }
+
+    config.current =  newCurrent ;
+    await service("config").saveOrUpdateList([config]);
+    move(0);
+
+ }
+
+
+ async function createNewFlashcard(word){
+       let configs  = await service("config").getAllFromStore();
+       let config = configs[0];
+       let def = application.definition;
+       let url = def.url + word.toLowerCase();
+       let htmlDefinition  = getHtml(url);
+       let size = await service("flashcard").getStoreSize();
+
+       let data = getDataFromXpath(htmlDefinition);
+       var lastPart = ' \nSENTENCE: '+data.short+' \n\nMNEMONIC: '+ data.long ;
+       var firstPart =  'MEANING: ';
+       var definition ;
+
+       while ((definition= data.definitions.pop() ) !== null && typeof definition !== "undefined") {
+        firstPart = firstPart + definition.type+'.- '+definition.definition + '\n'
+       }
+
+       word = word.replace(/^\w/, c => c.toUpperCase());
+
+       let result  =  firstPart+lastPart ;
+
+       let newFlashCard = {};
+       newFlashCard.question = word ;
+       newFlashCard.answer = result ;
+       newFlashCard.cardColor = "yellow" ;
+       newFlashCard.textColor = "black" ;
+       newFlashCard.status = "0" ;
+       newFlashCard.times = "0" ;
+       newFlashCard.order= size ;
+       newFlashCard.normalOrder = ""+size ;
+
+       console.log("htmlDefinition:"+htmlDefinition);
+
+       service("flashcard").saveOrUpdateList([newFlashCard]);
+       config.current =  size ;
+       await service("config").saveOrUpdateList([config]);
+       move(0);
+ }
+
+ function getDataFromXpath( bodyHtml) {
+   var data = {} ;
+
+
+   var regExpShort = new RegExp('<p class="short">(.*?)</p>') ;
+   var short = regExpShort.exec(bodyHtml);
+   var regExpLong = new RegExp('<p class="long">(.*?)</p>');
+   var long = regExpLong.exec(bodyHtml);
+   var regExpDefinitions =  new RegExp("/<h3 class=\"definition\">(.*?)title=\"(.*?)\"(.*?)<\\/a>(.*?)<\\/h3>/gm") ;
+   var singleLine = bodyHtml.replace(/(?:\r\n|\r|\n)/g,"");
+   var definitions = [] ;
+   var definition ;
+
+   while ((definition= regExpDefinitions.exec(singleLine)) !== null) {
+     definition[2] = definition[2].trim();
+     definition[4] = definition[4].trim();
+     definitions.push({type:definition[2],definition:definition[4]})
+   }
+  // Logger.log("singleLine:"+singleLine);
+   shortText = "";
+   longText = "" ;
+   if( short != null){
+     short[1] =  short[1].replace(/<i>|<\/i>/g, "");
+     shortText =  short[1] ;
+   }
+   if( long != null){
+     long[1] = long[1].replace(/<i>|<\/i>/g, "");
+     longText = long[1] ;
+   }
+   data = {short:shortText , long:longText , definitions:definitions};
+
+   return data ;
+ };

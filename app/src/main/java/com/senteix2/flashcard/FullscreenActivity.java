@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.speech.tts.TextToSpeech;
@@ -13,12 +14,15 @@ import android.webkit.ConsoleMessage;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senteix2.flashcard.util.GoogleDocumentImporter;
 import com.senteix2.flashcard.util.HtmlImporter;
 import com.senteix2.flashcard.util.Log;
 import com.senteix2.flashcard.util.PropertyReader;
+
+import org.jsoup.internal.StringUtil;
 
 import java.util.Date;
 import java.util.Locale;
@@ -123,6 +127,14 @@ public class FullscreenActivity extends AppCompatActivity {
         mVisible = true;
         mControlsView = findViewById(R.id.fullscreen_content_controls);
         webview = findViewById(R.id.webview);
+
+        CharSequence newCardSeq = getIntent().getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT);
+        final String newCardString = newCardSeq!=null ?  newCardSeq.toString() : "" ;
+        Log.d(TAG, "newCardString:"+newCardString);
+
+
+
+
         webview.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
@@ -130,9 +142,23 @@ public class FullscreenActivity extends AppCompatActivity {
                 return true;
             }
 
+
+        });
+
+        webview.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url)
+            {
+                if(!StringUtil.isBlank(newCardString)) {
+                    webview.evaluateJavascript("searchOrAddFlashCard('" + newCardString + "') ; ", null);
+                }
+            }
         });
 
         webview.loadUrl(properties.getProperty("application.url"));
+
+
+
         webview.getSettings().setJavaScriptEnabled(true);
         webview.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
         webview.getSettings().setLoadWithOverviewMode(true);
@@ -151,10 +177,21 @@ public class FullscreenActivity extends AppCompatActivity {
         });
 
 
-
-
         updateUI();
     }
+
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);//must store the new intent unless getIntent() will return the old one
+        //processExtraData();
+        CharSequence newCardSeq = getIntent().getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT);
+        String newCardString = newCardSeq!=null ?  newCardSeq.toString() : "" ;
+        Log.d(TAG, "newCardString:"+newCardString);
+        if(!StringUtil.isBlank(newCardString)){
+            webview.evaluateJavascript("searchOrAddFlashCard('"+newCardString+"') ; ", null);
+        }
+    }
+
     @JavascriptInterface
     public String getBackup(String url){
         Log.d(TAG,"url: ? "+ url);
